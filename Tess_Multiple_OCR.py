@@ -1,11 +1,10 @@
 import pytesseract
-from PIL import Image
+from PIL import Image, ImageChops
 import os,os.path
 import io
 import time
 
-
-Version = "v1 (05-12-19)"
+Version = "v1.4 (05-12-19)"
 print "\nMulti Tesseract Image -> .txt %s\n\n" %Version
 
 ##########################
@@ -34,7 +33,26 @@ def Con_Image(filename_jpg):
     print "%s --> %s | %.1f sec" %(filename_jpg,Output_Name,(time.time() - start)) #Print status with time taken
     return 1
 
+def Trimm(im):
+    bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, -100)
+    bbox = diff.getbbox()
+    if bbox:
+        return im.crop(bbox)
+    
+def Trimm_Convert(filename_jpg):
+    (abso_filen,ext_file) = os.path.splitext(filename_jpg)
+    im = Image.open(filename_jpg)
+    im = Trimm(im)
+    im.save("%s_trim.%s" %(abso_filen,ext_file))
+    Con_Image("%s_trim.%s" %(abso_filen,ext_file))
+    #im.show()
+    return 1
+    
+    
 
+    
 Root_Dir = os.getcwd() #Get Cur Dir
 
 Get_Total_Image = len([name for name in os.listdir('.') if os.path.isfile(name) if name.endswith(('.bmp','.img','.jpe','.jpeg','.jpg','.png'))])
@@ -44,7 +62,8 @@ if Get_Total_Image == 0:
     raw_input("Press Any key to exit : ")
 else:
     print "\n\nTotal Images found : %d\n" %Get_Total_Image
-    Res = raw_input("Start converting ? (y/n) : ")
+    Trimm_Check = raw_input("Do you want to trim the borders before conv ? (y/n) : ")
+    Res = raw_input("\nStart converting ? (y/n) : ")
     print "\n"
     if Res == 'y':
         start = time.time()
@@ -53,7 +72,10 @@ else:
                 for fname in fileList:
                     if fname.endswith(('.bmp', '.gif','.img','.jpe','.jpeg','.jpg','.pcd','.png','.psd','.tiff','.raw','.svg','.ico')) == True:
                         # Finds Image files and call out the Con_Image
-                        Files_Converted += Con_Image(fname)
+                        if Trimm_Check == 'y':
+                            Files_Converted += Trimm_Convert(fname)
+                        else:
+                            Files_Converted += Con_Image(fname)
         print "\n\nConverted -> %d | %.1f sec\n\n" %(Files_Converted,(time.time()-start))
         raw_input("\nPress any key to exit : ")
         time.sleep(2)
