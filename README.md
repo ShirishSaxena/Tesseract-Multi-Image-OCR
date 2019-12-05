@@ -1,5 +1,6 @@
 # Tesseract-Multi-Image-OCR
 Converts multiple images to .txt format using Tesseract v4.*
+
 Supports Border cropping
 
 ```
